@@ -145,7 +145,37 @@ func updateStudentEndpoint(response http.ResponseWriter, request *http.Request) 
 
 // Method to delete a student in database
 func deleteStudentEndpoint(response http.ResponseWriter, request *http.Request) {
-	// Todo..
+	// Add headers in response interface
+	response.Header().Add("content-type", "application/json")
+
+	// creating an object of type struct student
+	var student Student
+
+	// error handling
+	err := json.NewDecoder(request.Body).Decode(&student)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{"message":` + err.Error() + `}`))
+		return
+	}
+
+	// reading collection
+	collection := client.Database("student-records").Collection("students")
+
+	// deleting a record in collection
+	// 1. creating a filter object
+	filter := bson.D{primitive.E{Key: "name", Value: student.Name}}
+
+	// 2. delete query
+	delete_result, err := collection.DeleteOne(context.TODO(), filter)
+
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{"message":` + err.Error() + `}`))
+		return
+	}
+
+	json.NewEncoder(response).Encode(delete_result)
 }
 
 // main method
